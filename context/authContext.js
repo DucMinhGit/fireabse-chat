@@ -1,56 +1,102 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { auth, db } from "../firebaseConfig";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export const AuthContext = createContext();
 
-export const AuthContextProvider = ({children}) => {
-    const [user, setUser] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(undefined);
+export const AuthContextProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(undefined);
 
-    useEffect(() => {
-        // onAuthStateChanged
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setUser(user);
+        updateUserData(user.uid);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    });
+    return unsub;
+  }, []);
 
-        // setTimeout(() => {
-            setIsAuthenticated(false);
-        // }, 3000);
-    }, []);
+  const updateUserData = async (userId) => {
+    const docRef = doc(db, 'users', userId);
+    const docSnap = await getDoc(docRef);
 
-    const login = async (email, password) => {
-        try {
+    if(docSnap.exists()) {
+      let data = docSnap.data();
+      setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId});
 
-        } catch(e) {
+    }
+  }
 
-        }
-    };
+  const login = async (email, password) => {
+    try {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+        return {success: true};
+    } catch (e) {
+        let msg = e.message;
+        if (msg.includes("(auth/invalid-email)")) msg = "Invalid email!";
+        if (msg.includes("(auth/invalid-credential)")) msg = "Wrong credential!";
+        return { success: false, msg };
+    }
+  };
 
-    const logout = async () => {
-        try {
-            
-        } catch(e) {
+  const logout = async () => {
+    try {
+        await signOut(auth);
+        return {success: true};
+    } catch (e) {
+        return {success: false, msg: e.message, error: e};
+    }
+  };
 
-        }
-    };
+  const register = async (email, password, username, profileUrl) => {
+    try {
+      const response = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-    const register = async(email, password, username, profileUrl) => {
-        try {
+      await setDoc(doc(db, "users", response?.user?.uid), {
+        username,
+        profileUrl,
+        userId: response?.user?.uid,
+      });
+      return { success: true, data: response?.user };
+    } catch (e) {
+      let msg = e.message;
+      if (msg.includes("(auth/invalid-email)")) msg = "Invalid email";
+      if (msg.includes("(auth/email-already-in-use)")) msg = "This email is already in use";
+      return { success: false, msg };
+    }
+  };
 
-        } catch(e) {
-
-        }
-    };
-
-    return (
-        <AuthContext.Provider value={{user, isAuthenticated, login, register, logout}}>
-            {children}
-        </AuthContext.Provider>
-    );
-}
+  return (
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, login, register, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = () => {
-    const value = useContext(AuthContext);
+  const value = useContext(AuthContext);
 
-    if (!value) {
-        throw new Error('useAuth must be wrapped inside AuthContextProvider');
-    }
+  if (!value) {
+    throw new Error("useAuth must be wrapped inside AuthContextProvider");
+  }
 
-    return value;
-}
+  return value;
+};
