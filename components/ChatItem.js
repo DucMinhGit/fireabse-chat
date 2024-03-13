@@ -8,10 +8,10 @@ import { Image } from "expo-image";
 import { blurhash } from "../utils/common";
 
 export default function ChatItem({ item, router, noBorder }) {
-    const openChatRoom = () => {
-        router.push({pathname: '/chatRoom', parmas: item})
-    }
-    return (
+  const openChatRoom = () => {
+    router.push({ pathname: "/chatRoom", params: item });
+  };
+  return (
     <View>
       <TouchableOpacity
         onPress={openChatRoom}
@@ -19,10 +19,10 @@ export default function ChatItem({ item, router, noBorder }) {
         className={`flex-row items-center`}
       >
         <Image
-            style={{ height: hp(6), width: hp(6), borderRadius: 100 }}
-            source={item?.profileUrl}
-            placeholder={blurhash}
-            transition={500}
+          style={{ height: hp(6), width: hp(6), borderRadius: 100 }}
+          source={item?.profileUrl}
+          placeholder={blurhash}
+          transition={500}
         />
 
         {/* name and last message */}
@@ -40,9 +40,7 @@ export default function ChatItem({ item, router, noBorder }) {
             <Text
               style={{ fontSize: hp(1.6) }}
               className="font-medium text-neutral-500"
-            >
-              
-            </Text>
+            ></Text>
           </View>
           <Text
             style={{ fontSize: hp(1.6) }}
@@ -68,6 +66,6 @@ const styles = StyleSheet.create({
 
   showBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#c8ccd1',
-  }
-})
+    borderBottomColor: "#c8ccd1",
+  },
+});

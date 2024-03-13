@@ -3,16 +3,24 @@ import React from 'react'
 
 const android = Platform.OS = 'android';
 
-export default function ({children}) {
+export default function ({children, inChat}) {
+  let kavConfig = {};
+  let scrollViewConfig = {};
+  if(inChat) {
+    kavConfig = {keyboardVerticalOffset: 90};
+    scrollViewConfig = {contentContainerStyle: {flex: 1}}
+  }
   return (
     <KeyboardAvoidingView
         behavior={android?'padding':'height'}
         style={{flex: 1}}
+        {...kavConfig}
     >
         <ScrollView
             style={{flex: 1}}
             bounces={false}
             showsVerticalScrollIndicator={false}
+            {...scrollViewConfig}
         >
             {
                 children
